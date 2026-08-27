@@ -1,0 +1,259 @@
+index.html<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test d'Aptitude - Programme Élite</title>
+    <style>
+        :root {
+            --primary-color: #e11b22; /* Rouge Vodacom */
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #212529;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .quiz-container {
+            background: var(--card-bg);
+            max-width: 600px;
+            width: 100%;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 25px;
+        }
+        .progress-bar {
+            height: 6px;
+            background-color: #e9ecef;
+            border-radius: 3px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+        .progress {
+            height: 100%;
+            background-color: var(--primary-color);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .question {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .options-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .option-btn {
+            display: block;
+            width: 100%;
+            padding: 14px 20px;
+            margin-bottom: 12px;
+            background-color: #fff;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            text-align: left;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .option-btn:hover:not([disabled]) {
+            border-color: var(--primary-color);
+            background-color: #fff5f5;
+        }
+        .option-btn.correct {
+            background-color: #d4edda !important;
+            border-color: var(--success-color) !important;
+            color: #155724;
+        }
+        .option-btn.incorrect {
+            background-color: #f8d7da !important;
+            border-color: var(--danger-color) !important;
+            color: #721c24;
+        }
+        .feedback {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+        .feedback.show { display: block; }
+        .next-btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            display: none;
+            text-align: center;
+        }
+        .next-btn:hover { background-color: #b81318; }
+        .result-screen { text-align: center; display: none; }
+        .score-display { font-size: 48px; font-weight: bold; color: var(--primary-color); margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div id="quiz-box">
+        <h1 id="quiz-title">Simulation Élite - Test d'Aptitude</h1>
+        <div class="progress-bar"><div id="progress" class="progress"></div></div>
+        <div id="question" class="question"></div>
+        <div id="options" class="options-list"></div>
+        <div id="feedback" class="feedback"></div>
+        <button id="next-btn" class="next-btn" onclick="nextQuestion()">Question suivante</button>
+    </div>
+
+    <div id="result-box" class="result-screen">
+        <h1>Test Terminé !</h1>
+        <p>Votre score est de :</p>
+        <div id="score" class="score-display">0 / 0</div>
+        <p id="result-message"></p>
+        <button class="next-btn" style="display:block;" onclick="restartQuiz()">Recommencer le test</button>
+    </div>
+</div>
+
+<script>
+    const quizData = [
+        {
+            question: "Quelle est la valeur du nombre manquant dans la suite logique suivante : 3, 7, 15, 31, 63, ... ?",
+            options: ["125", "127", "128", "115"],
+            correct: 1,
+            hint: "Correct ! Chaque terme correspond au double du précédent auquel on ajoute 1 (63 * 2 + 1 = 127). La différence double aussi à chaque étape (+4, +8, +16, +32, +64)."
+        },
+        {
+            question: "Le prix d'un smartphone augmente de 20 % la première année, puis baisse de 10 % l'année suivante. Quelle est la variation globale ?",
+            options: ["+10 %", "-8 %", "+12 %", "+8 %"],
+            correct: 3,
+            hint: "Correct ! Si le prix de base est 100, il passe à 120 (+20 %). La baisse de 10 % s'applique sur 120 (soit -12). Le prix final est 108, soit une hausse globale de 8 %."
+        },
+        {
+            question: "Quel est le nom de l'autorité publique qui assure la régulation des télécommunications et du numérique en RDC ?",
+            options: ["ARPTC", "SCPTP", "MINPOSTEL", "OCC"],
+            correct: 0,
+            hint: "Correct ! L'ARPTC (Autorité de Régulation de la Poste et des Télécommunications du Congo) est l'organe officiel de régulation en RDC."
+        },
+        {
+            question: "Complétez la suite alphanumérique suivante : Z1, X3, V6, T10, ... ?",
+            options: ["S15", "R14", "R15", "P15"],
+            correct: 2,
+            hint: "Correct ! Les lettres reculent de 2 rangs (Z, X, V, T, R) et les chiffres suivent la suite des nombres triangulaires en ajoutant des valeurs croissantes (+2, +3, +4, +5)."
+        },
+        {
+            question: "Si 2 serveurs informatiques mettent 6 heures pour traiter une base de données, combien de temps mettront 4 serveurs identiques ?",
+            options: ["2 heures", "3 heures", "4 heures", "1,5 heure"],
+            correct: 1,
+            hint: "Correct ! Le temps de traitement est inversement proportionnel au nombre de machines. En doublant les serveurs (de 2 à 4), le temps est divisé par 2 (6h / 2 = 3h)."
+        }
+    ];
+
+    let currentQuestionIdx = 0;
+    let score = 0;
+    let answered = false;
+
+    function loadQuestion() {
+        answered = false;
+        const currentData = quizData[currentQuestionIdx];
+        
+        document.getElementById("progress").style.width = `${(currentQuestionIdx / quizData.length) * 100}%`;
+        document.getElementById("question").innerText = `${currentQuestionIdx + 1}. ${currentData.question}`;
+        
+        const optionsContainer = document.getElementById("options");
+        optionsContainer.innerHTML = "";
+        
+        currentData.options.forEach((option, idx) => {
+            const button = document.createElement("button");
+            button.innerText = option;
+            button.classList.add("option-btn");
+            button.onclick = () => selectOption(idx, button);
+            optionsContainer.appendChild(button);
+        });
+
+        document.getElementById("feedback").className = "feedback";
+        document.getElementById("next-btn").style.display = "none";
+    }
+
+    function selectOption(selectedIdx, selectedBtn) {
+        if (answered) return;
+        answered = true;
+        
+        const currentData = quizData[currentQuestionIdx];
+        const allButtons = document.querySelectorAll(".option-btn");
+        
+        allButtons.forEach(btn => btn.disabled = true);
+
+        if (selectedIdx === currentData.correct) {
+            selectedBtn.classList.add("correct");
+            score++;
+            showFeedback(true, currentData.hint);
+        } else {
+            selectedBtn.classList.add("incorrect");
+            allButtons[currentData.correct].classList.add("correct");
+            showFeedback(false, `Dommage ! La bonne réponse était : ${currentData.options[currentData.correct]}. <br>${currentData.hint}`);
+        }
+
+        document.getElementById("next-btn").style.display = "block";
+    }
+
+    function showFeedback(isCorrect, text) {
+        const fbBox = document.getElementById("feedback");
+        fbBox.innerHTML = text;
+        fbBox.className = `feedback show ${isCorrect ? 'correct' : 'incorrect'}`;
+        fbBox.style.backgroundColor = isCorrect ? "#d4edda" : "#f8d7da";
+        fbBox.style.color = isCorrect ? "#155724" : "#721c24";
+        fbBox.style.border = `1px solid ${isCorrect ? '#c3e6cb' : '#f5c6cb'}`;
+    }
+
+    function nextQuestion() {
+        currentQuestionIdx++;
+        if (currentQuestionIdx < quizData.length) {
+            loadQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        document.getElementById("quiz-box").style.display = "none";
+        document.getElementById("result-box").style.display = "block";
+        document.getElementById("score").innerText = `${score} / ${quizData.length}`;
+        
+        const msg = document.getElementById("result-message");
+        const ratio = score / quizData.length;
+        if (ratio >= 0.8) {
+            msg.innerText = "Excellent ! Vous avez d'excellentes aptitudes logiques pour réussir le test d'organisation Élite !";
+        } else if (ratio >= 0.5) {
+            msg.innerText = "Bon score ! Encore un peu d'entraînement et vous serez parfaitement prêt.";
+        } else {
+            msg.innerText = "Continuez à réviser. Repassez le test pour vous améliorer !";
+        }
+    }
+
+    function restartQuiz() {
+        currentQuestionIdx = 0;
+        score = 0;
